@@ -36,6 +36,8 @@
     });
   }
 
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   /* ---------- Theme ---------- */
   var mql = window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -55,6 +57,11 @@
   if (themeBtn) {
     themeBtn.addEventListener('click', function () {
       var next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+      if (!reduceMotion) {
+        // Crossfade colors for this one change only, so page load never animates.
+        root.classList.add('theme-transition');
+        setTimeout(function () { root.classList.remove('theme-transition'); }, 350);
+      }
       root.setAttribute('data-theme', next);
       try { localStorage.setItem('theme', next); } catch (e) { /* storage unavailable */ }
       labelThemeButton();
@@ -92,6 +99,78 @@
     }, { rootMargin: '-35% 0px -55% 0px', threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] });
 
     sections.forEach(function (s) { io.observe(s); });
+  }
+
+  /* ---------- Scroll reveal ---------- */
+  // Each section block fades up the first time it enters the viewport. The
+  // .reveal class is added here, not in the HTML, so nothing is hidden without JS.
+  if (!reduceMotion && 'IntersectionObserver' in window) {
+    var blocks = Array.prototype.slice.call(document.querySelectorAll('.section > .container, .site-footer'));
+    var revealer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          revealer.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -6% 0px', threshold: 0.04 });
+
+    blocks.forEach(function (block) {
+      block.classList.add('reveal');
+      // Blocks already scrolled past (deep links such as #contact) stay visible.
+      if (block.getBoundingClientRect().bottom < 0) block.classList.add('is-visible');
+      else revealer.observe(block);
+    });
+  }
+
+  /* ---------- Drifting patch tile ---------- */
+  // The crimson tile behind the photo steps to a neighboring tile every few
+  // seconds, staying in the part of the grid that isn't covered by the photo.
+  // Runs only while the hero is on screen and the tab is visible.
+  var tiles = document.querySelector('.tiles');
+  if (tiles && !reduceMotion) {
+    var cells = Array.prototype.slice.call(tiles.querySelectorAll('.tile'));
+    var size = Math.round(Math.sqrt(cells.length));
+    var start = cells.indexOf(tiles.querySelector('.tile--patch'));
+
+    if (size * size === cells.length && start >= 0) {
+      var row = Math.floor(start / size);
+      var col = start % size;
+      var timer = null;
+      var heroInView = true;
+
+      var allowed = function (r, c) {
+        return r >= 0 && c >= 0 && r < size && c < size && (r >= size - 3 || c >= size - 2);
+      };
+
+      var drift = function () {
+        var moves = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(function (d) {
+          return allowed(row + d[0], col + d[1]);
+        });
+        if (!moves.length) return;
+        var d = moves[Math.floor(Math.random() * moves.length)];
+        cells[row * size + col].classList.remove('tile--patch');
+        row += d[0];
+        col += d[1];
+        cells[row * size + col].classList.add('tile--patch');
+      };
+
+      var run = function () {
+        var shouldRun = heroInView && !document.hidden;
+        if (shouldRun && timer === null) timer = setInterval(drift, 3600);
+        if (!shouldRun && timer !== null) { clearInterval(timer); timer = null; }
+      };
+
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(function (entries) {
+          heroInView = entries[0].isIntersecting;
+          run();
+        }).observe(tiles);
+      } else {
+        run();
+      }
+      document.addEventListener('visibilitychange', run);
+    }
   }
 
   /* ---------- Contact form ---------- */

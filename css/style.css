@@ -606,6 +606,80 @@ img {
   }
 }
 
+/* ---------- Motion ----------
+   Everything here is skipped when the visitor prefers reduced motion.
+   Scroll reveal: site.js adds .reveal to each section block and .is-visible
+   the first time it enters the viewport, so without JavaScript nothing is hidden.
+   Patch drift: site.js moves .tile--patch to a neighboring tile every few
+   seconds; the fill transition does the rest. */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  .tile {
+    transition: fill 0.8s ease, opacity 0.8s ease;
+  }
+
+  .btn {
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+      transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px -12px rgba(28, 36, 48, 0.45);
+  }
+
+  .btn:active {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .icon-btn {
+    transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+  }
+
+  .icon-btn:hover {
+    transform: translateY(-1px);
+  }
+
+  a {
+    transition: color 0.15s ease, text-decoration-color 0.15s ease,
+      text-decoration-thickness 0.15s ease;
+  }
+
+  .prose a:hover,
+  .pub__links a:hover,
+  .project__links a:hover,
+  .hero__links a:hover,
+  .contact-list a:hover,
+  .dated-list a:hover,
+  .entry a:hover,
+  .highlights a:hover,
+  .section__link:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  html.theme-transition,
+  html.theme-transition * {
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease,
+      fill 0.25s ease, box-shadow 0.25s ease !important;
+  }
+}
+
+/* The moving patch is always fully opaque, whichever tile holds it. */
+.tile--patch {
+  opacity: 1;
+}
+
 /* ---------- Sections ---------- */
 .section {
   padding-block: clamp(2.75rem, 6vw, 4.5rem);
