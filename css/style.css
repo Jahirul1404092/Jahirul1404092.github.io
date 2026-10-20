@@ -878,6 +878,24 @@ ul + .side__title {
   gap: 1rem;
 }
 
+/* The lead project spans the full width and reads as the headline entry. */
+.project--featured {
+  grid-column: 1 / -1;
+  padding-bottom: 1.5rem;
+}
+
+.project--featured .project__title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-lg);
+  letter-spacing: -0.01em;
+}
+
+.project--featured .project__desc {
+  max-width: 72ch;
+  margin-top: 0.5rem;
+}
+
 .project__title {
   font-size: 1.05rem;
   font-weight: 600;
